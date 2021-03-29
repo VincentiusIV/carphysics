@@ -5,18 +5,21 @@ using UnityEngine;
 
 public class Car : MonoBehaviour
 {
+    public float enginePower = 50, brakePower = 25, steerPower = 10;
+    public float drag = 0.05f, rollingResistance = 1.5f; // rolling resistance must be about 30x drag
+
+
     private Rigidbody Rigidbody;
-    public float accelerationSpeed = 10, steerSpeed = 10;
-    private float steer, acceleration;
+    private float steer, gasPedal;
 
     private void Awake()
     {
         Rigidbody = GetComponent<Rigidbody>();
     }
 
-    public void Accelerate(float acceleration)
+    public void Accelerate(float gasPedal)
     {
-        this.acceleration = acceleration;
+        this.gasPedal = gasPedal;
     }
 
     public void Steer(float steer)
@@ -26,8 +29,17 @@ public class Car : MonoBehaviour
 
     private void FixedUpdate()
     {
-        Rigidbody.AddForce(transform.forward * acceleration * accelerationSpeed);
-        Rigidbody.AddTorque(Vector3.up * steer * steerSpeed);
+        // F_traction = u * EngineForce / F_brake = -u * BrakePower
+        Vector3 F_traction = transform.forward * gasPedal * (gasPedal >= 0 ? enginePower : brakePower);
+        // F_drag = -C_drag * v * |v|
+        Vector3 F_drag = -drag * Rigidbody.velocity.normalized * Rigidbody.velocity.sqrMagnitude;
+        // F_rr = -C_rr * v
+        Vector3 F_rr = -rollingResistance * Rigidbody.velocity.normalized;
+        // Longtitudinal force
+        Vector3 F_long = F_traction + F_drag + F_rr;
+
+        Rigidbody.AddForce(F_long);
+
     }
 
     public void Reset()
