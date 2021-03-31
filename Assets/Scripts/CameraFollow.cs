@@ -29,7 +29,6 @@ public class CameraFollow : MonoBehaviour
         Vector3 targetPosition = target.TransformPoint(offsetFromTarget);
         targetPosition.y = Mathf.Max(minY, targetPosition.y);
         transform.position = Vector3.Lerp(transform.position, targetPosition, Mathf.Clamp01(Time.fixedDeltaTime * speed));
-
         Vector3 toTarget = (target.position - transform.position).normalized;
         transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.LookRotation(toTarget, Vector3.up), Mathf.Clamp01(Time.fixedDeltaTime * rotateSpeed));
     }

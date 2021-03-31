@@ -8,13 +8,14 @@ public class Car : MonoBehaviour
     public float enginePower = 50, brakePower = 25, steerPower = 10;
     public float drag = 0.05f, rollingResistance = 1.5f; // rolling resistance must be about 30x drag
 
-
+    private Wheel[] wheels;
     private Rigidbody Rigidbody;
     private float steer, gasPedal;
 
     private void Awake()
     {
         Rigidbody = GetComponent<Rigidbody>();
+        wheels = GetComponentsInChildren<Wheel>();
     }
 
     public void Accelerate(float gasPedal)
