@@ -58,7 +58,7 @@ public class Wheel : MonoBehaviour
 
     private void FixedUpdate()
     {
-
+        myRigidbody.MoveRotation(Quaternion.Euler(0, steer * 25, 0));
 
         /*
         if (gasPedal > 0)
@@ -96,7 +96,6 @@ public class Wheel : MonoBehaviour
         }
 
         float F_long = 0;
-        Vector3 F_traction = Vector3.zero;
         if (gasPedal > 0)
         {
             float f_gas = gasPedal * enginePower * radius;
@@ -121,7 +120,11 @@ public class Wheel : MonoBehaviour
                 F_long = gasPedal * brakePower * Mathf.Sign(myRigidbody.velocity.z);
             }
         }
-        F_traction = transform.forward * F_long;
+        float xVel = transform.InverseTransformDirection(myRigidbody.velocity).x;
+        float F_lat = kineticFriction * 9.81f * myRigidbody.mass * -Mathf.Sign(xVel);
+        // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
+        F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * myRigidbody.mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * myRigidbody.mass / Time.fixedDeltaTime);
+        Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
         myRigidbody.AddForce(F_traction);
     }
 
