@@ -10,7 +10,6 @@ public class Car : MonoBehaviour
 
     public Wheel[] wheels;
     private Rigidbody Rigidbody;
-    private float steer, gasPedal;
 
     private void Awake()
     {
@@ -19,7 +18,6 @@ public class Car : MonoBehaviour
 
     public void Accelerate(float gasPedal)
     {
-        this.gasPedal = gasPedal;
         foreach (var wheel in wheels)
         {
             wheel.Accelerate(gasPedal);
@@ -28,7 +26,6 @@ public class Car : MonoBehaviour
 
     public void Steer(float steer)
     {
-        this.steer = steer;
         foreach (var wheel in wheels)
         {
             wheel.Steer(steer);
@@ -36,20 +33,7 @@ public class Car : MonoBehaviour
     }
 
     private void FixedUpdate()
-    {
-
-
-        return;
-        // F_traction = u * EngineForce / F_brake = -u * BrakePower
-        Vector3 F_traction = transform.forward * gasPedal * (gasPedal >= 0 ? enginePower : brakePower);
-        // F_drag = -C_drag * v * |v|
-        Vector3 F_drag = -drag * Rigidbody.velocity.normalized * Rigidbody.velocity.sqrMagnitude;
-        // F_rr = -C_rr * v
-        Vector3 F_rr = -rollingResistance * Rigidbody.velocity.normalized;
-        // Longtitudinal force
-        Vector3 F_long = F_traction + F_drag + F_rr;
-
-        Rigidbody.AddForce(F_long);
+    { 
 
     }
 

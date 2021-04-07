@@ -5,6 +5,7 @@ using UnityEngine;
 public class Wheel : MonoBehaviour
 {
     public Rigidbody carRigidbody;
+    public bool IsOnGround { get; private set; }
     public float radius;
     public float staticFriction;
     public float kineticFriction;
@@ -15,7 +16,6 @@ public class Wheel : MonoBehaviour
     [Tooltip("Rolling resistance should be about 30x drag")]
     public float rollingResistance;     
     private float steer, gasPedal;
-    private ParticleSystem particles;
 
     public void Reset()
     {
@@ -35,7 +35,7 @@ public class Wheel : MonoBehaviour
 
     private void Awake()
     {
-        particles = GetComponent<ParticleSystem>();
+
     }
 
     public void Accelerate(float gasPedal)
@@ -55,7 +55,10 @@ public class Wheel : MonoBehaviour
 
         // Only apply traction force if the wheel is touching smth on the ground.
         RaycastHit hit;
-        if(!Physics.Raycast(transform.position, Vector3.down, out hit, radius))
+        IsOnGround = Physics.Raycast(transform.position, Vector3.down, out hit, radius);
+        if(IsOnGround)
+            IsOnGround &= (hit.collider.GetComponent<Car>() == null); // ignore hits on car.
+        if (!IsOnGround)
         {
             return;
         }
@@ -74,10 +77,6 @@ public class Wheel : MonoBehaviour
             else
             {
                 Debug.Log("Wheelspin");
-                if (!particles.isEmitting)
-                {
-                    particles.Play();
-                }
                 F_long = kineticFriction * 9.81f * mass;
             }
         }
@@ -88,6 +87,7 @@ public class Wheel : MonoBehaviour
                 F_long = gasPedal * brakePower * Mathf.Sign(velocity.z);
             }
         }
+
         float xVel = transform.InverseTransformDirection(velocity).x;
         float F_lat = kineticFriction * 9.81f * mass * -Mathf.Sign(xVel);
         // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
