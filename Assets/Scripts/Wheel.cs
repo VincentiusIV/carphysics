@@ -101,6 +101,10 @@ public class Wheel : MonoBehaviour
         // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
         F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * mass / Time.fixedDeltaTime);
         Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
+
+        Vector3 F_drag = -drag * velocity.normalized * velocity.sqrMagnitude;
+        F_traction += F_drag;
+
         carRigidbody.AddForceAtPosition(F_traction, transform.position);
     }
 
