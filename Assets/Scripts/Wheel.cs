@@ -1,11 +1,14 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 public class Wheel : MonoBehaviour
 {
-    public Rigidbody carRigidbody;
     public bool IsOnGround { get; private set; }
+    public float F_long { get; private set; }
+    public float F_lat { get; private set; }
+    public Rigidbody carRigidbody;    
     public float radius;
     public float staticFriction;
     public float kineticFriction;
@@ -18,30 +21,36 @@ public class Wheel : MonoBehaviour
     [Tooltip("Rolling resistance should be about 30x drag")]
     public float rollingResistance;
 
-    public float F_long { get; private set;}
-    public float F_lat { get; private set;}
+    [Header("Suspension")]
+    public float suspensionLength = 0;
+    public float springStiffness, damperStiffness;
+
+    private Vector3 localWheelJointPosition; // relative to car rigidbody
+    private Vector3 springVelocity;
+
+    private Vector3 lastWheelPosition;
 
     private float steer, gasPedal;
+    private Rigidbody wheelRigidbody;    
 
     public void Reset()
     {
         radius = .5f;
         mass = 15;
         staticFriction = 1;
-        kineticFriction = 0.7f;
-        
+        kineticFriction = 0.7f;        
         enginePower = 50;
         brakePower = 10;
         drag = 0.05f;
         rollingResistance = 1.5f;
-
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
     }
 
     private void Awake()
     {
-
+        wheelRigidbody = GetComponent<Rigidbody>();
+        localWheelJointPosition = carRigidbody.transform.InverseTransformPoint(transform.position);
     }
 
     public void Accelerate(float gasPedal)
@@ -56,25 +65,44 @@ public class Wheel : MonoBehaviour
 
     private void FixedUpdate()
     {
-        if(canSteer)
-        {
-            float yRot = transform.localEulerAngles.y;
-            float targetYRot = steer * steerAngle;
-            Quaternion targetRot = Quaternion.Euler(0, targetYRot, 0);
-            transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRot, steerSpeed * Time.fixedDeltaTime);
-        }
-
+        UpdateSteering();
+        ApplySuspensionForce();
         // Only apply traction force if the wheel is touching smth on the ground.
+        if (!CheckIsOnGround())
+            return;
+    }
+
+    private void OnCollisionStay(Collision collision)
+    {
+        ApplyTractionForce();
+    }
+
+    private void UpdateSteering()
+    {
+        if (canSteer)
+        {
+            float targetYRot = steer * steerAngle;
+            Quaternion targetRot = carRigidbody.rotation * Quaternion.Euler(0, targetYRot, 0);
+            wheelRigidbody.MoveRotation(Quaternion.Lerp(wheelRigidbody.rotation, targetRot, steerSpeed * Time.fixedDeltaTime));
+        }
+        else
+        {
+            wheelRigidbody.MoveRotation(carRigidbody.rotation);
+        }
+    }
+
+    private bool CheckIsOnGround()
+    {
         RaycastHit hit;
         IsOnGround = Physics.Raycast(transform.position, Vector3.down, out hit, radius);
-        if(IsOnGround)
+        if (IsOnGround)
             IsOnGround &= (hit.collider.GetComponent<Car>() == null); // ignore hits on car.
-        if (!IsOnGround)
-        {
-            return;
-        }
         Debug.DrawLine(transform.position, hit.point);
+        return IsOnGround;
+    }
 
+    private void ApplyTractionForce()
+    {
         Vector3 velocity = carRigidbody.GetPointVelocity(transform.position);
 
         F_long = 0;
@@ -108,12 +136,50 @@ public class Wheel : MonoBehaviour
         Vector3 F_rr = -rollingResistance * velocity;
         F_traction += F_rr;
 
-        carRigidbody.AddForceAtPosition(F_traction, transform.position);
+        carRigidbody.AddForceAtPosition(F_traction, transform.position + -transform.up * radius); // apply traction force at contact point with ground.
+    }
+
+    private void ApplySuspensionForce()
+    {
+        Vector3 wheelJointPosition = localWheelJointPosition - transform.up * suspensionLength;
+
+        Vector3 velocityAtJoint = carRigidbody.GetRelativePointVelocity(wheelJointPosition);
+        Vector3 wheelVelocity = wheelRigidbody.velocity;
+        Vector3 jointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);
+
+        // Spring-damper system F = -kx - bv
+        Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position);
+        Vector3 F_suspension = F_spring - damperStiffness * springVelocity;
+        springVelocity += F_spring * Time.fixedDeltaTime;
+        
+        carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
+        wheelRigidbody.AddForceAtPosition(-F_suspension, wheelRigidbody.position);
+
+        // solve position of wheel rigidbody.
+        Vector3 wheelPosition = wheelRigidbody.position;
+        // Constrain wheel rigidbody x and z axis to the joint.
+        wheelPosition.x = jointPosition.x;
+        wheelPosition.z = jointPosition.z;
+        wheelRigidbody.MovePosition(wheelPosition);
+
+        lastWheelPosition = wheelPosition;
     }
 
     private void OnDrawGizmosSelected()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position, transform.position + Vector3.down * radius);
+
+        Vector3 wheelJointPosition = localWheelJointPosition + transform.up * suspensionLength;
+        Gizmos.color = Color.cyan;
+        if(!Application.isPlaying)
+        {
+            wheelRigidbody = GetComponent<Rigidbody>();
+            localWheelJointPosition = carRigidbody.transform.InverseTransformPoint(transform.position);
+        }
+        Vector3 worldWheelJointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);
+        Gizmos.DrawLine(transform.position, worldWheelJointPosition);
+        Gizmos.DrawWireSphere(worldWheelJointPosition, 0.1f);
+
     }
 }

@@ -48,8 +48,11 @@ public class CameraFollow : MonoBehaviour
 
         Quaternion targetRotation = Quaternion.Euler(y, x, 0);
         Vector3 negDistance = new Vector3(0.0f, 0.0f, -distance);
+
+        Vector3 fixedTargetPos = target.position;
+        fixedTargetPos.y = 0;
         
-        Vector3 targetPosition = targetRotation * negDistance + target.position + (targetRotation * (offsetFromTarget));
+        Vector3 targetPosition = targetRotation * negDistance + fixedTargetPos + (targetRotation * (offsetFromTarget));
 
         transform.rotation = targetRotation;
         transform.position = targetPosition;
