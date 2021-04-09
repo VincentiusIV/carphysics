@@ -97,13 +97,16 @@ public class Wheel : MonoBehaviour
         }
 
         float xVel = transform.InverseTransformDirection(velocity).x;
-        F_lat = kineticFriction * 9.81f * mass * -Mathf.Sign(xVel);
+        F_lat = kineticFriction * Physics.gravity.magnitude * mass * -Mathf.Sign(xVel);
         // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
         F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * mass / Time.fixedDeltaTime);
         Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
 
-        Vector3 F_drag = -drag * velocity.normalized * velocity.sqrMagnitude;
+        Vector3 F_drag = -drag * velocity.normalized * velocity.magnitude;
         F_traction += F_drag;
+
+        Vector3 F_rr = -rollingResistance * velocity;
+        F_traction += F_rr;
 
         carRigidbody.AddForceAtPosition(F_traction, transform.position);
     }
