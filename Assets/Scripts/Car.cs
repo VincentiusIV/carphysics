@@ -41,6 +41,13 @@ public class Car : MonoBehaviour
     {
         GUI.TextArea(new Rect(10, 10, 200, 20), "Car Velocity: " + Rigidbody.velocity);
         GUI.TextArea(new Rect(10, 30, 200, 20), "Car Speed: " + Rigidbody.velocity.magnitude);
+
+        for (int i = 0; i < wheels.Length; i++)
+        {
+            int y = 50 + 40 * i;
+            GUI.TextArea(new Rect(10, y, 200, 20), string.Format("{0} F_long: {1}", wheels[i].gameObject.name, wheels[i].F_long));
+            GUI.TextArea(new Rect(10, y + 20, 200, 20), string.Format("{0} F_lat: {1}", wheels[i].gameObject.name, wheels[i].F_lat));
+        }
     }
 
     public void Reset()

@@ -12,11 +12,15 @@ public class Wheel : MonoBehaviour
     public float enginePower, brakePower, steerPower;
     public float drag;
     public float mass;
+    public float steerSpeed = 5;
+    public float steerAngle = 25;
     public bool canSteer;
     [Tooltip("Rolling resistance should be about 30x drag")]
-    public float rollingResistance;     
-    
-    private float F_long, F_lat;
+    public float rollingResistance;
+
+    public float F_long { get; private set;}
+    public float F_lat { get; private set;}
+
     private float steer, gasPedal;
 
     public void Reset()
@@ -53,7 +57,12 @@ public class Wheel : MonoBehaviour
     private void FixedUpdate()
     {
         if(canSteer)
-            transform.localRotation = Quaternion.Euler(0, steer * 25, 0);
+        {
+            float yRot = transform.localEulerAngles.y;
+            float targetYRot = steer * steerAngle;
+            Quaternion targetRot = Quaternion.Euler(0, targetYRot, 0);
+            transform.localRotation = Quaternion.Lerp(transform.localRotation, targetRot, steerSpeed * Time.fixedDeltaTime);
+        }
 
         // Only apply traction force if the wheel is touching smth on the ground.
         RaycastHit hit;
