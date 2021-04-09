@@ -37,6 +37,12 @@ public class Car : MonoBehaviour
 
     }
 
+    private void OnGUI()
+    {
+        GUI.TextArea(new Rect(10, 10, 200, 20), "Car Velocity: " + Rigidbody.velocity);
+        GUI.TextArea(new Rect(10, 30, 200, 20), "Car Speed: " + Rigidbody.velocity.magnitude);
+    }
+
     public void Reset()
     {
         Rigidbody.velocity = Vector3.zero;
