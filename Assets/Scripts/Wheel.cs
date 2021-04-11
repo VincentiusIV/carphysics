@@ -29,6 +29,7 @@ public class Wheel : MonoBehaviour
     private Vector3 springVelocity;
 
     private Vector3 lastWheelPosition;
+    private Quaternion currentVerticalRotation;
 
     private float steer, gasPedal;
     private Rigidbody wheelRigidbody;    
@@ -82,8 +83,9 @@ public class Wheel : MonoBehaviour
         if (canSteer)
         {
             float targetYRot = steer * steerAngle;
-            Quaternion targetRot = carRigidbody.rotation * Quaternion.Euler(0, targetYRot, 0);
-            wheelRigidbody.MoveRotation(Quaternion.Lerp(wheelRigidbody.rotation, targetRot, steerSpeed * Time.fixedDeltaTime));
+            currentVerticalRotation = Quaternion.Lerp(currentVerticalRotation, Quaternion.Euler(0, targetYRot, 0), steerSpeed * Time.fixedDeltaTime);
+            Quaternion targetRot = carRigidbody.rotation * currentVerticalRotation;
+            wheelRigidbody.MoveRotation(targetRot);
         }
         else
         {
@@ -148,22 +150,18 @@ public class Wheel : MonoBehaviour
         Vector3 jointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);        
         Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position); // Spring-damper system F = -kx - bv
         Vector3 F_suspension = F_spring - damperStiffness * (springVelocity / Time.fixedDeltaTime);        
-        carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
-        
+        carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);        
+
         springVelocity = (carRigidbody.GetPointVelocity(wheelRigidbody.position));
-        //lastWheelPosition = carRigidbody.position;
-        // solve position of wheel rigidbody.
-
-        // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).
-        //wheelPosition.x = jointPosition.x;
-        //wheelPosition.z = jointPosition.z;
-
+        
+        // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).        
         Vector3 wheelPosition = wheelJointPosition;
-
         wheelPosition.y = (carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position)).y;
         wheelPosition.y = Mathf.Clamp(wheelPosition.y, wheelJointPosition.y - suspensionLength, wheelJointPosition.y + suspensionLength);
         Vector3 worldPos = carRigidbody.position + carRigidbody.rotation * wheelPosition;
         wheelRigidbody.MovePosition(worldPos);
+
+        //wheelRigidbody.velocity = carRigidbody.GetPointVelocity(wheelRigidbody.position);
     }
 
     private void OnDrawGizmos()
