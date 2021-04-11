@@ -116,12 +116,12 @@ public class Wheel : MonoBehaviour
             else
             {
                 Debug.Log("Wheelspin");
-                F_long = kineticFriction * 9.81f * mass;
+                F_long = kineticFriction * Physics.gravity.magnitude * mass;
             }
         }
         else
         {
-            F_long = gasPedal * brakePower * Mathf.Sign(velocity.z);
+            F_long = gasPedal * brakePower;
         }
 
         float xVel = transform.InverseTransformDirection(velocity).x;
@@ -159,10 +159,11 @@ public class Wheel : MonoBehaviour
         //wheelPosition.z = jointPosition.z;
 
         Vector3 wheelPosition = wheelJointPosition;
-        wheelPosition.y = carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position).y;
+
+        wheelPosition.y = (carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position)).y;
         wheelPosition.y = Mathf.Clamp(wheelPosition.y, wheelJointPosition.y - suspensionLength, wheelJointPosition.y + suspensionLength);
         Vector3 worldPos = carRigidbody.position + carRigidbody.rotation * wheelPosition;
-        wheelRigidbody.MovePosition(worldPos);        
+        wheelRigidbody.MovePosition(worldPos);
     }
 
     private void OnDrawGizmos()
