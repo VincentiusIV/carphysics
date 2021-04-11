@@ -56,5 +56,10 @@ public class Car : MonoBehaviour
         Rigidbody.angularVelocity = Vector3.zero;
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
+        foreach (var wheel in wheels)
+        {
+            wheel.carRigidbody.velocity = Vector3.zero;
+            wheel.carRigidbody.angularVelocity = Vector3.zero;
+        }
     }
 }

@@ -25,7 +25,7 @@ public class Wheel : MonoBehaviour
     public float suspensionLength = 0;
     public float springStiffness, damperStiffness;
 
-    private Vector3 localWheelJointPosition; // relative to car rigidbody
+    private Vector3 localWheelJointPosition, wheelJointPosition; // relative to car rigidbody
     private Vector3 springVelocity;
 
     private Vector3 lastWheelPosition;
@@ -74,7 +74,7 @@ public class Wheel : MonoBehaviour
 
     private void OnCollisionStay(Collision collision)
     {
-        ApplyTractionForce();
+        ApplyTractionForce(collision);
     }
 
     private void UpdateSteering()
@@ -101,7 +101,7 @@ public class Wheel : MonoBehaviour
         return IsOnGround;
     }
 
-    private void ApplyTractionForce()
+    private void ApplyTractionForce(Collision collision)
     {
         Vector3 velocity = carRigidbody.GetPointVelocity(transform.position);
 
@@ -136,41 +136,40 @@ public class Wheel : MonoBehaviour
         Vector3 F_rr = -rollingResistance * velocity;
         F_traction += F_rr;
 
-        carRigidbody.AddForceAtPosition(F_traction, transform.position + -transform.up * radius); // apply traction force at contact point with ground.
+        carRigidbody.AddForceAtPosition(F_traction, wheelRigidbody.position - transform.up * radius); // apply traction force at contact point with ground.
     }
 
     private void ApplySuspensionForce()
     {
-        Vector3 wheelJointPosition = localWheelJointPosition - transform.up * suspensionLength;
+        wheelJointPosition = localWheelJointPosition - Vector3.up * suspensionLength;
 
         Vector3 velocityAtJoint = carRigidbody.GetRelativePointVelocity(wheelJointPosition);
         Vector3 wheelVelocity = wheelRigidbody.velocity;
-        Vector3 jointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);
-
-        // Spring-damper system F = -kx - bv
-        Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position);
-        Vector3 F_suspension = F_spring - damperStiffness * springVelocity;
-        springVelocity += F_spring * Time.fixedDeltaTime;
-        
+        Vector3 jointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);        
+        Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position); // Spring-damper system F = -kx - bv
+        Vector3 F_suspension = F_spring - damperStiffness * (springVelocity / Time.fixedDeltaTime);        
         carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
-        wheelRigidbody.AddForceAtPosition(-F_suspension, wheelRigidbody.position);
-
+        
+        springVelocity = (carRigidbody.GetPointVelocity(wheelRigidbody.position));
+        //lastWheelPosition = carRigidbody.position;
         // solve position of wheel rigidbody.
-        Vector3 wheelPosition = wheelRigidbody.position;
-        // Constrain wheel rigidbody x and z axis to the joint.
-        wheelPosition.x = jointPosition.x;
-        wheelPosition.z = jointPosition.z;
-        wheelRigidbody.MovePosition(wheelPosition);
 
-        lastWheelPosition = wheelPosition;
+        // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).
+        //wheelPosition.x = jointPosition.x;
+        //wheelPosition.z = jointPosition.z;
+
+        Vector3 wheelPosition = wheelJointPosition;
+        wheelPosition.y = carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position).y;
+        wheelPosition.y = Mathf.Clamp(wheelPosition.y, wheelJointPosition.y - suspensionLength, wheelJointPosition.y + suspensionLength);
+        Vector3 worldPos = carRigidbody.position + carRigidbody.rotation * wheelPosition;
+        wheelRigidbody.MovePosition(worldPos);        
     }
 
-    private void OnDrawGizmosSelected()
+    private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
         Gizmos.DrawLine(transform.position, transform.position + Vector3.down * radius);
-
-        Vector3 wheelJointPosition = localWheelJointPosition + transform.up * suspensionLength;
+        
         Gizmos.color = Color.cyan;
         if(!Application.isPlaying)
         {
