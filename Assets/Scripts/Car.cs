@@ -47,7 +47,14 @@ public class Car : MonoBehaviour
     {
         foreach (var wheel in wheels)
         {
-            wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0) * gearRatios[currentGear] * finalDriveRatio);
+            if (wheel.isPowered)
+            {
+                wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0) * gearRatios[currentGear] * finalDriveRatio);
+            }
+            else
+            {
+                wheel.Accelerate(0);
+            }
             wheel.Brake(gasPedal);
         }
     }
