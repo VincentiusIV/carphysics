@@ -28,7 +28,7 @@ public class Wheel : MonoBehaviour
     [Header("Suspension")]
     public float suspensionLength = 0;
     public float springStiffness, damperStiffness;
-    public float wheelMult = 0.05;
+    public float wheelMult = 0.05f;
 
     private Vector3 localWheelJointPosition, wheelJointPosition; 
     private Vector3 springVelocity;
