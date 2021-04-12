@@ -28,6 +28,7 @@ public class Wheel : MonoBehaviour
     [Header("Suspension")]
     public float suspensionLength = 0;
     public float springStiffness, damperStiffness;
+    public float wheelMult = 0.05;
 
     private Vector3 localWheelJointPosition, wheelJointPosition; 
     private Vector3 springVelocity;
@@ -131,7 +132,8 @@ public class Wheel : MonoBehaviour
         Vector3 F_rr = -rollingResistance * velocity;
         F_traction += F_rr;
 
-        carRigidbody.AddForceAtPosition(F_traction, wheelRigidbody.position - transform.up * radius); // apply traction force at contact point with ground.
+        carRigidbody.AddForceAtPosition(F_traction / 2, wheelRigidbody.position - transform.up * radius); // apply traction force at contact point with ground.
+        wheelRigidbody.AddForce(F_traction / 2 * wheelMult );
     }
 
     private void ApplySuspensionForce()
