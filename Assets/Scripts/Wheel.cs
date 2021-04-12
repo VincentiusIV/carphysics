@@ -10,20 +10,25 @@ public class Wheel : MonoBehaviour
     public float F_lat { get; private set; }
     public Rigidbody carRigidbody;    
     public float radius;
-    public float staticFriction;
-    public float kineticFriction;
-    public float brakePower, steerPower;
+
+    public float brakePower;
     public float drag;
     public float mass;
-    public float steerSpeed = 5;
-    public float steerAngle = 25;
+
+    [Header("Tyre")]
+    public float staticFriction;
+    public float kineticFriction;
+    public float rollingResistance; // should be about 30x drag (?)
+
+    [Header("Steering")]
     public bool canSteer;
-    [Tooltip("Rolling resistance should be about 30x drag")]
-    public float rollingResistance;
+    public float steerAngle = 25;
+    public float steerSpeed = 5;
 
     [Header("Suspension")]
     public float suspensionLength = 0;
     public float springStiffness, damperStiffness;
+
 
     private Vector3 localWheelJointPosition, wheelJointPosition; // relative to car rigidbody
     private Vector3 springVelocity;
@@ -33,7 +38,7 @@ public class Wheel : MonoBehaviour
 
     private float steer;
     private Rigidbody wheelRigidbody;
-    
+
     private float engineTorque;
     private float brakePedal;
 

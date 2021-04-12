@@ -8,15 +8,21 @@ public class Car : MonoBehaviour
     public Wheel[] wheels;
     private Rigidbody Rigidbody;
 
+    [Header("Engine")]
     public AnimationCurve torqueCurve;
-    private float minRPM, maxRPM;
+    private float minRPM, maxRPM; // derived from torqueCurve
 
-    public float ratio = 10; // Temporary shortcut for gear ratio, differential ratio, etc.
+    [Header("Gearing")]
+    public float[] gearRatios = { 3.91f, 2.44f, 1.81f, 1.46f, 1.19f, 0.97f};
+    public float finalDriveRatio = 2.86f;
+    public float reverseRatio = -2.93f;
+
+
+    private int currentGear = 0;
+
     private float rpm = 0;
     private float clampedrpm = 0;
     private float referenceWheelAngVel; // Rad/s of reference wheel to calculate engine rpm
-
-    private const float rads2rpm = 60 / (2 * Mathf.PI); // TODO: put this somewhere cleaner
 
     private void Awake()
     {
@@ -27,8 +33,8 @@ public class Car : MonoBehaviour
 
     private void FixedUpdate()
     {
-        referenceWheelAngVel = transform.InverseTransformDirection(Rigidbody.velocity).z / wheels[0].radius;
-        rpm = referenceWheelAngVel * ratio * rads2rpm;
+        referenceWheelAngVel = transform.InverseTransformDirection(Rigidbody.velocity).z / wheels[0].radius; // cheating
+        rpm = referenceWheelAngVel * gearRatios[currentGear] * finalDriveRatio * Utility.RADPS2RPM;
         clampedrpm = Mathf.Clamp(rpm, minRPM, maxRPM);
     }
 
@@ -36,7 +42,7 @@ public class Car : MonoBehaviour
     {
         foreach (var wheel in wheels)
         {
-            wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0));
+            wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0) * gearRatios[currentGear] * finalDriveRatio);
             wheel.Brake(gasPedal);
         }
     }
@@ -49,17 +55,27 @@ public class Car : MonoBehaviour
         }
     }
 
+    public void GearShift(int change)
+    {
+        if (0 <= currentGear + change && currentGear + change < gearRatios.Length)
+        {
+            currentGear += change;
+        }
+    }
+
     private void OnGUI()
     {
         GUI.TextArea(new Rect(10, 10, 200, 20), "Car Velocity: " + Rigidbody.velocity);
         GUI.TextArea(new Rect(10, 30, 200, 20), "Car Speed: " + Rigidbody.velocity.magnitude);
 
-        GUI.TextArea(new Rect(10, 50, 200, 20), "Car RPM: " + string.Format("{0:0.000}", rpm));
-        GUI.TextArea(new Rect(10, 70, 200, 20), "Car Clamped RPM: " + string.Format("{0:0.000}", clampedrpm));
+        GUI.TextArea(new Rect(10, 50, 200, 20), "Car RPM: " + string.Format("{0:0.00}", rpm));
+        GUI.TextArea(new Rect(10, 70, 200, 20), "Car Clamped RPM: " + string.Format("{0:0.00}", clampedrpm));
+
+        GUI.TextArea(new Rect(10, 90, 200, 20), "Gear: " + string.Format("{0}", currentGear + 1));
 
         for (int i = 0; i < wheels.Length; i++)
         {
-            int y = 90 + 40 * i;
+            int y = 110 + 40 * i;
             GUI.TextArea(new Rect(10, y, 200, 20), string.Format("{0} F_long: {1}", wheels[i].gameObject.name, wheels[i].F_long));
             GUI.TextArea(new Rect(10, y + 20, 200, 20), string.Format("{0} F_lat: {1}", wheels[i].gameObject.name, wheels[i].F_lat));
         }

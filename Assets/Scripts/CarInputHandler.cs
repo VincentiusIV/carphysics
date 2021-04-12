@@ -21,7 +21,16 @@ public class CarInputHandler : MonoBehaviour
         car.Accelerate(gasPedal);
         car.Steer(steer);
 
-        if(Input.GetKeyDown(KeyCode.Escape))
+        if (Input.GetButtonDown("Gear Up"))
+        {
+            car.GearShift(1);
+        }
+        if (Input.GetButtonDown("Gear Down"))
+        {
+            car.GearShift(-1);
+        }
+
+        if (Input.GetKeyDown(KeyCode.Escape))
         {
             car.Reset();
         }
