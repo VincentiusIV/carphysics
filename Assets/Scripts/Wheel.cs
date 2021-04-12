@@ -161,10 +161,11 @@ public class Wheel : MonoBehaviour
         Vector3 jointPosition = carRigidbody.transform.TransformPoint(wheelJointPosition);        
         Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position); // Spring-damper system F = -kx - bv
         Vector3 F_suspension = F_spring - damperStiffness * (springVelocity / Time.fixedDeltaTime);        
-        carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);        
+        carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
 
-        springVelocity = (carRigidbody.GetPointVelocity(wheelRigidbody.position));
-        
+        //springVelocity = (carRigidbody.GetPointVelocity(wheelRigidbody.position));
+        springVelocity = wheelRigidbody.position - jointPosition;
+
         // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).        
         Vector3 wheelPosition = wheelJointPosition;
         wheelPosition.y = (carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position)).y;
