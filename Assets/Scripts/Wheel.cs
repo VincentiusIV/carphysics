@@ -177,9 +177,9 @@ public class Wheel : MonoBehaviour
 
     private void UpdateWheelMeshRotation()
     {
-        Vector3 euler = wheelMesh.transform.eulerAngles;
+        Vector3 euler = wheelMesh.transform.localEulerAngles;
         euler.x += engineTorque / radius;
-        wheelMesh.transform.eulerAngles = euler;
+        wheelMesh.transform.localEulerAngles = euler;
     }
 
     private void OnDrawGizmos()
