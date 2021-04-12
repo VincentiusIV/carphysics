@@ -16,9 +16,9 @@ public class CarInputHandler : MonoBehaviour
     private void Update()
     {
         float steer = Input.GetAxisRaw("Horizontal");
-        float acceleration = Input.GetAxisRaw("Vertical");
+        float gasPedal = Input.GetAxisRaw("Vertical");
 
-        car.Accelerate(acceleration);
+        car.Accelerate(gasPedal);
         car.Steer(steer);
 
         if(Input.GetKeyDown(KeyCode.Escape))

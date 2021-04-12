@@ -12,7 +12,7 @@ public class Wheel : MonoBehaviour
     public float radius;
     public float staticFriction;
     public float kineticFriction;
-    public float enginePower, brakePower, steerPower;
+    public float brakePower, steerPower;
     public float drag;
     public float mass;
     public float steerSpeed = 5;
@@ -31,16 +31,18 @@ public class Wheel : MonoBehaviour
     private Vector3 lastWheelPosition;
     private Quaternion currentVerticalRotation;
 
-    private float steer, gasPedal;
-    private Rigidbody wheelRigidbody;    
+    private float steer;
+    private Rigidbody wheelRigidbody;
+    
+    private float engineTorque;
+    private float brakePedal;
 
     public void Reset()
     {
         radius = .5f;
         mass = 15;
         staticFriction = 1;
-        kineticFriction = 0.7f;        
-        enginePower = 50;
+        kineticFriction = 0.7f;
         brakePower = 10;
         drag = 0.05f;
         rollingResistance = 1.5f;
@@ -54,9 +56,14 @@ public class Wheel : MonoBehaviour
         localWheelJointPosition = carRigidbody.transform.InverseTransformPoint(transform.position);
     }
 
-    public void Accelerate(float gasPedal)
+    public void Accelerate(float engineTorque)
     {
-        this.gasPedal = gasPedal;
+        this.engineTorque = engineTorque;
+    }
+
+    public void Brake(float brakePedal)
+    {
+        this.brakePedal = brakePedal;
     }
 
     public void Steer(float steer)
@@ -69,8 +76,8 @@ public class Wheel : MonoBehaviour
         UpdateSteering();
         ApplySuspensionForce();
         // Only apply traction force if the wheel is touching smth on the ground.
-        if (!CheckIsOnGround())
-            return;
+        /*if (!CheckIsOnGround())
+            return;*/
     }
 
     private void OnCollisionStay(Collision collision)
@@ -92,7 +99,7 @@ public class Wheel : MonoBehaviour
             wheelRigidbody.MoveRotation(carRigidbody.rotation);
         }
     }
-
+    /*
     private bool CheckIsOnGround()
     {
         RaycastHit hit;
@@ -101,16 +108,20 @@ public class Wheel : MonoBehaviour
             IsOnGround &= (hit.collider.GetComponent<Car>() == null); // ignore hits on car.
         Debug.DrawLine(transform.position, hit.point);
         return IsOnGround;
-    }
+    }*/
 
     private void ApplyTractionForce(Collision collision)
     {
         Vector3 velocity = carRigidbody.GetPointVelocity(transform.position);
 
         F_long = 0;
-        if (gasPedal > 0)
+        if (brakePedal < 0)
         {
-            float f_gas = gasPedal * enginePower * radius;
+            F_long = brakePedal * brakePower;
+        }
+        else if (engineTorque > 0)
+        {
+            float f_gas = engineTorque / radius;
             if (f_gas <= staticFriction * Physics.gravity.magnitude * mass)
             {
                 F_long = f_gas;
@@ -120,10 +131,6 @@ public class Wheel : MonoBehaviour
                 Debug.Log("Wheelspin");
                 F_long = kineticFriction * Physics.gravity.magnitude * mass;
             }
-        }
-        else
-        {
-            F_long = gasPedal * brakePower;
         }
 
         float xVel = transform.InverseTransformDirection(velocity).x;
