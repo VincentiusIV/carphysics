@@ -94,8 +94,7 @@ public class Car : MonoBehaviour
         transform.rotation = Quaternion.identity;
         foreach (var wheel in wheels)
         {
-            wheel.carRigidbody.velocity = Vector3.zero;
-            wheel.carRigidbody.angularVelocity = Vector3.zero;
+            wheel.ClearVelocities();
         }
         drag = 0.05f;
     }

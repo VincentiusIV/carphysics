@@ -18,7 +18,7 @@ public class Wheel : MonoBehaviour
     [Header("Tyre")]
     public float staticFriction;
     public float kineticFriction;
-    public float rollingResistance; // should be about 30x drag (?)
+    public float rollingResistance;
 
     [Header("Steering")]
     public bool canSteer;
@@ -29,16 +29,12 @@ public class Wheel : MonoBehaviour
     public float suspensionLength = 0;
     public float springStiffness, damperStiffness;
 
-
-    private Vector3 localWheelJointPosition, wheelJointPosition; // relative to car rigidbody
+    private Vector3 localWheelJointPosition, wheelJointPosition; 
     private Vector3 springVelocity;
-
     private Vector3 lastWheelPosition;
     private Quaternion currentVerticalRotation;
-
-    private float steer;
     private Rigidbody wheelRigidbody;
-
+    private float steer;
     private float engineTorque;
     private float brakePedal;
 
@@ -81,9 +77,6 @@ public class Wheel : MonoBehaviour
         UpdateSteering();
         ApplySuspensionForce();
         UpdateWheelMeshRotation();
-        // Only apply traction force if the wheel is touching smth on the ground.
-        /*if (!CheckIsOnGround())
-            return;*/
     }
 
     private void OnCollisionStay(Collision collision)
@@ -105,16 +98,6 @@ public class Wheel : MonoBehaviour
             wheelRigidbody.MoveRotation(carRigidbody.rotation);
         }
     }
-    /*
-    private bool CheckIsOnGround()
-    {
-        RaycastHit hit;
-        IsOnGround = Physics.Raycast(transform.position, Vector3.down, out hit, radius);
-        if (IsOnGround)
-            IsOnGround &= (hit.collider.GetComponent<Car>() == null); // ignore hits on car.
-        Debug.DrawLine(transform.position, hit.point);
-        return IsOnGround;
-    }*/
 
     private void ApplyTractionForce(Collision collision)
     {
@@ -144,8 +127,7 @@ public class Wheel : MonoBehaviour
         // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
         F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * mass / Time.fixedDeltaTime);
         Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
-
-
+        
         Vector3 F_rr = -rollingResistance * velocity;
         F_traction += F_rr;
 
@@ -176,17 +158,16 @@ public class Wheel : MonoBehaviour
         wheelRigidbody.MovePosition(worldPos);
     }
 
-    Vector3 lastPos;
     private void UpdateWheelMeshRotation()
     {
         Vector3 currentPos = wheelRigidbody.position;
-        Vector3 delta = (currentPos - lastPos);
+        Vector3 delta = (currentPos - lastWheelPosition);
         float angleRad = delta.magnitude / radius;
         float angle = Mathf.Rad2Deg * angleRad;
         float sign = Vector3.Dot(carRigidbody.transform.forward, delta.normalized);
         Quaternion rot = Quaternion.Euler(sign * angle, 0, 0);
         wheelMesh.rotation *= rot;
-        lastPos = currentPos;
+        lastWheelPosition = currentPos;
     }
 
     private void OnDrawGizmos()
@@ -204,5 +185,16 @@ public class Wheel : MonoBehaviour
         Gizmos.DrawLine(transform.position, worldWheelJointPosition);
         Gizmos.DrawWireSphere(worldWheelJointPosition, 0.1f);
 
-    } 
+    }
+
+    internal void ClearVelocities()
+    {
+        wheelRigidbody.velocity = Vector3.zero;
+        wheelRigidbody.angularVelocity = Vector3.zero;
+        wheelJointPosition = localWheelJointPosition - Vector3.up * suspensionLength;
+        wheelRigidbody.transform.position = carRigidbody.transform.TransformPoint(wheelJointPosition);
+        springVelocity = Vector3.zero;
+        lastWheelPosition = wheelRigidbody.transform.position;
+        engineTorque = brakePedal = 0;
+    }
 }
