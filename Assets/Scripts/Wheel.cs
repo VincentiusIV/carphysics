@@ -162,8 +162,7 @@ public class Wheel : MonoBehaviour
         Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position); // Spring-damper system F = -kx - bv
         Vector3 F_suspension = F_spring - damperStiffness * (springVelocity / Time.fixedDeltaTime);        
         carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
-
-        //springVelocity = (carRigidbody.GetPointVelocity(wheelRigidbody.position));
+        
         springVelocity = wheelRigidbody.position - jointPosition;
 
         // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).        
@@ -173,14 +172,21 @@ public class Wheel : MonoBehaviour
         Vector3 worldPos = carRigidbody.position + carRigidbody.rotation * wheelPosition;
         wheelRigidbody.MovePosition(worldPos);
 
-        //wheelRigidbody.velocity = carRigidbody.GetPointVelocity(wheelRigidbody.position);
+        wheelRigidbody.AddForce(carRigidbody.GetPointVelocity(wheelRigidbody.position) * Time.fixedDeltaTime, ForceMode.Impulse);
     }
 
+    Vector3 lastPos;
     private void UpdateWheelMeshRotation()
     {
-        Vector3 euler = wheelMesh.transform.localEulerAngles;
-        euler.x += engineTorque / radius;
-        wheelMesh.transform.localEulerAngles = euler;
+        Vector3 currentPos = wheelRigidbody.position;
+        Vector3 delta = (currentPos - lastPos);
+        float angleRad = delta.magnitude / radius;
+        float angle = Mathf.Rad2Deg * angleRad;
+        float sign = Vector3.Dot(carRigidbody.transform.forward, delta.normalized);
+        Quaternion rot = Quaternion.Euler(sign * angle, 0, 0);
+        wheelMesh.rotation *= rot;
+
+        lastPos = currentPos;
     }
 
     private void OnDrawGizmos()
