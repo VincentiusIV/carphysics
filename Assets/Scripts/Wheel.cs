@@ -162,7 +162,9 @@ public class Wheel : MonoBehaviour
         Vector3 F_spring = -springStiffness * (jointPosition - wheelRigidbody.position); // Spring-damper system F = -kx - bv
         Vector3 F_suspension = F_spring - damperStiffness * (springVelocity / Time.fixedDeltaTime);        
         carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
-        
+
+        wheelRigidbody.AddForce(-F_suspension / carRigidbody.mass);
+
         springVelocity = wheelRigidbody.position - jointPosition;
 
         // Constrain wheel rigidbody position (xdist=0, ydist=suspensionLength, zdist=0).        
@@ -170,9 +172,8 @@ public class Wheel : MonoBehaviour
         wheelPosition.y = (carRigidbody.transform.InverseTransformPoint(wheelRigidbody.position)).y;
         wheelPosition.y = Mathf.Clamp(wheelPosition.y, wheelJointPosition.y - suspensionLength, wheelJointPosition.y + suspensionLength);
         Vector3 worldPos = carRigidbody.position + carRigidbody.rotation * wheelPosition;
-        wheelRigidbody.MovePosition(worldPos);
 
-        wheelRigidbody.AddForce(carRigidbody.GetPointVelocity(wheelRigidbody.position) * Time.fixedDeltaTime, ForceMode.Impulse);
+        wheelRigidbody.MovePosition(worldPos);
     }
 
     Vector3 lastPos;
@@ -185,7 +186,6 @@ public class Wheel : MonoBehaviour
         float sign = Vector3.Dot(carRigidbody.transform.forward, delta.normalized);
         Quaternion rot = Quaternion.Euler(sign * angle, 0, 0);
         wheelMesh.rotation *= rot;
-
         lastPos = currentPos;
     }
 
