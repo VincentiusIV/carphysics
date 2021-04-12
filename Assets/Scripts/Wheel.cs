@@ -14,6 +14,7 @@ public class Wheel : MonoBehaviour
 
     public float brakePower;
     public float mass;
+    public bool isPowered;
 
     [Header("Tyre")]
     public float staticFriction;
@@ -24,6 +25,8 @@ public class Wheel : MonoBehaviour
     public bool canSteer;
     public float steerAngle = 25;
     public float steerSpeed = 5;
+    [Tooltip("Flip sign for right-side wheels")]
+    public float toeAngle = 0;
 
     [Header("Suspension")]
     public float suspensionLength = 0;
@@ -88,14 +91,14 @@ public class Wheel : MonoBehaviour
     {
         if (canSteer)
         {
-            float targetYRot = steer * steerAngle;
+            float targetYRot = steer * steerAngle + toeAngle;
             currentVerticalRotation = Quaternion.Lerp(currentVerticalRotation, Quaternion.Euler(0, targetYRot, 0), steerSpeed * Time.fixedDeltaTime);
             Quaternion targetRot = carRigidbody.rotation * currentVerticalRotation;
             wheelRigidbody.MoveRotation(targetRot);
         }
         else
         {
-            wheelRigidbody.MoveRotation(carRigidbody.rotation);
+            wheelRigidbody.MoveRotation(carRigidbody.rotation * Quaternion.Euler(0, toeAngle, 0));
         }
     }
 
