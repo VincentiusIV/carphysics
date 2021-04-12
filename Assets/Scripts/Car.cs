@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class Car : MonoBehaviour
 {
+    public float drag;
     public Wheel[] wheels;
     private Rigidbody Rigidbody;
 
@@ -16,7 +17,6 @@ public class Car : MonoBehaviour
     public float[] gearRatios = { 3.91f, 2.44f, 1.81f, 1.46f, 1.19f, 0.97f};
     public float finalDriveRatio = 2.86f;
     public float reverseRatio = -2.93f;
-
 
     private int currentGear = 0;
 
@@ -36,6 +36,11 @@ public class Car : MonoBehaviour
         referenceWheelAngVel = transform.InverseTransformDirection(Rigidbody.velocity).z / wheels[0].radius; // cheating
         rpm = referenceWheelAngVel * gearRatios[currentGear] * finalDriveRatio * Utility.RADPS2RPM;
         clampedrpm = Mathf.Clamp(rpm, minRPM, maxRPM);
+
+        // drag
+
+        Vector3 F_drag = -drag * Rigidbody.velocity.normalized * Rigidbody.velocity.magnitude;
+        Rigidbody.AddForce(F_drag);
     }
 
     public void Accelerate(float gasPedal)
@@ -92,5 +97,6 @@ public class Car : MonoBehaviour
             wheel.carRigidbody.velocity = Vector3.zero;
             wheel.carRigidbody.angularVelocity = Vector3.zero;
         }
+        drag = 0.05f;
     }
 }

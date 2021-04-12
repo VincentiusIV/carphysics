@@ -10,9 +10,9 @@ public class Wheel : MonoBehaviour
     public float F_lat { get; private set; }
     public Rigidbody carRigidbody;    
     public float radius;
+    public Transform wheelMesh;
 
     public float brakePower;
-    public float drag;
     public float mass;
 
     [Header("Tyre")]
@@ -49,7 +49,7 @@ public class Wheel : MonoBehaviour
         staticFriction = 1;
         kineticFriction = 0.7f;
         brakePower = 10;
-        drag = 0.05f;
+
         rollingResistance = 1.5f;
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
@@ -80,6 +80,7 @@ public class Wheel : MonoBehaviour
     {
         UpdateSteering();
         ApplySuspensionForce();
+        UpdateWheelMeshRotation();
         // Only apply traction force if the wheel is touching smth on the ground.
         /*if (!CheckIsOnGround())
             return;*/
@@ -144,8 +145,6 @@ public class Wheel : MonoBehaviour
         F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * mass / Time.fixedDeltaTime);
         Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
 
-        Vector3 F_drag = -drag * velocity.normalized * velocity.magnitude;
-        F_traction += F_drag;
 
         Vector3 F_rr = -rollingResistance * velocity;
         F_traction += F_rr;
@@ -176,6 +175,11 @@ public class Wheel : MonoBehaviour
         //wheelRigidbody.velocity = carRigidbody.GetPointVelocity(wheelRigidbody.position);
     }
 
+    private void UpdateWheelMeshRotation()
+    {
+        throw new NotImplementedException();
+    }
+
     private void OnDrawGizmos()
     {
         Gizmos.color = Color.red;
@@ -191,5 +195,5 @@ public class Wheel : MonoBehaviour
         Gizmos.DrawLine(transform.position, worldWheelJointPosition);
         Gizmos.DrawWireSphere(worldWheelJointPosition, 0.1f);
 
-    }
+    } 
 }
