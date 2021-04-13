@@ -41,6 +41,8 @@ public class Wheel : MonoBehaviour
     private float steer;
     private float engineTorque;
     private float brakePedal;
+    private WheelDriftTrail trail;
+    private float suspensionForce;
 
     public void Reset()
     {
@@ -59,6 +61,7 @@ public class Wheel : MonoBehaviour
     {
         wheelRigidbody = GetComponent<Rigidbody>();
         localWheelJointPosition = carRigidbody.transform.InverseTransformPoint(transform.position);
+        trail = GetComponentInChildren<WheelDriftTrail>();
     }
 
     public void Accelerate(float engineTorque)
@@ -107,6 +110,8 @@ public class Wheel : MonoBehaviour
     {
         Vector3 velocity = carRigidbody.GetPointVelocity(transform.position);
 
+        trail.shouldEmit = false;
+        float f_normal = Physics.gravity.magnitude * mass + suspensionForce;
         F_long = 0;
         if (brakePedal < 0)
         {
@@ -115,19 +120,19 @@ public class Wheel : MonoBehaviour
         else if (engineTorque > 0)
         {
             float f_gas = engineTorque / radius;
-            if (f_gas <= staticFriction * Physics.gravity.magnitude * mass)
+            if (f_gas <= staticFriction * f_normal)
             {
                 F_long = f_gas;
             }
             else
             {
-                Debug.Log("Wheelspin");
-                F_long = kineticFriction * Physics.gravity.magnitude * mass;
+                trail.shouldEmit = true;
+                F_long = kineticFriction * f_normal;
             }
         }
 
         float xVel = transform.InverseTransformDirection(velocity).x;
-        F_lat = kineticFriction * Physics.gravity.magnitude * mass * -Mathf.Sign(xVel);
+        F_lat = kineticFriction * f_normal * -Mathf.Sign(xVel);
         // Friction force is constant, we need to ensure the velocity change during the next frame doesn't exceed the velocity causing the friction
         F_lat = Mathf.Clamp(F_lat, -Mathf.Abs(xVel) * mass / Time.fixedDeltaTime, Mathf.Abs(xVel) * mass / Time.fixedDeltaTime);
         Vector3 F_traction = transform.forward * F_long + transform.right * F_lat;
@@ -151,6 +156,7 @@ public class Wheel : MonoBehaviour
         carRigidbody.AddForceAtPosition(F_suspension, wheelRigidbody.position);
 
         wheelRigidbody.AddForce(-F_suspension / carRigidbody.mass);
+        suspensionForce = F_suspension.magnitude;
 
         springVelocity = wheelRigidbody.position - jointPosition;
 

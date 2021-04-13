@@ -17,6 +17,7 @@ public class Car : MonoBehaviour
     public float[] gearRatios = { 3.91f, 2.44f, 1.81f, 1.46f, 1.19f, 0.97f};
     public float finalDriveRatio = 2.86f;
     public float reverseRatio = -2.93f;
+    public float gearEfficiency = .2f;
 
     private int currentGear = 0;
 
@@ -40,7 +41,7 @@ public class Car : MonoBehaviour
         // drag
 
         Vector3 F_drag = -drag * Rigidbody.velocity.normalized * Rigidbody.velocity.magnitude;
-        Rigidbody.AddForce(F_drag);
+        //Rigidbody.AddForce(F_drag);
     }
 
     public void Accelerate(float gasPedal)
@@ -49,7 +50,7 @@ public class Car : MonoBehaviour
         {
             if (wheel.isPowered)
             {
-                wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0) * gearRatios[currentGear] * finalDriveRatio);
+                wheel.Accelerate(torqueCurve.Evaluate(clampedrpm) * Mathf.Max(gasPedal, 0) * gearRatios[currentGear] * finalDriveRatio * gearEfficiency);
             }
             else
             {
@@ -79,10 +80,9 @@ public class Car : MonoBehaviour
     {
         GUI.TextArea(new Rect(10, 10, 200, 20), "Car Velocity: " + Rigidbody.velocity);
         GUI.TextArea(new Rect(10, 30, 200, 20), "Car Speed: " + Rigidbody.velocity.magnitude);
+        GUI.TextArea(new Rect(10, 50, 200, 20), "km/h: " + Rigidbody.velocity.magnitude * 3.6f);
 
-        GUI.TextArea(new Rect(10, 50, 200, 20), "Car RPM: " + string.Format("{0:0.00}", rpm));
-        GUI.TextArea(new Rect(10, 70, 200, 20), "Car Clamped RPM: " + string.Format("{0:0.00}", clampedrpm));
-
+        GUI.TextArea(new Rect(10, 70, 200, 20), "Car RPM: " + string.Format("{0:0.00}", clampedrpm));
         GUI.TextArea(new Rect(10, 90, 200, 20), "Gear: " + string.Format("{0}", currentGear + 1));
 
         for (int i = 0; i < wheels.Length; i++)
@@ -103,6 +103,5 @@ public class Car : MonoBehaviour
         {
             wheel.ClearVelocities();
         }
-        drag = 0.05f;
     }
 }
